@@ -30,7 +30,7 @@
 
 ```bash
 # Clonar repositorio
-git clone
+git clone https://github.com/GinoL221/tuHospedaje-final-project.git
 cd tu_hospedaje_app
 
 # Instalar dependencias
