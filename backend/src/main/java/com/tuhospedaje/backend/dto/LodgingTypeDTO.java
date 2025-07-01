@@ -9,14 +9,10 @@ import lombok.Setter;
 @Setter
 @Builder
 @AllArgsConstructor
-public class UserDTO {
+public class LodgingTypeDTO {
     private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String role;
+    private String name;
 
-    public UserDTO() {
+    public LodgingTypeDTO() {
     }
 }
-

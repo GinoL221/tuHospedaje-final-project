@@ -1,14 +1,18 @@
 package com.tuhospedaje.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Setter
 @Getter
 @Entity
-@Table(name = "hotels")
-public class Hotel {
+@Table(name = "lodgings")
+public class Lodging {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,9 +22,6 @@ public class Hotel {
 
     @Column(name = "description")
     private String description;
-
-    @Column(name = "price_per_night", nullable = false)
-    private Double pricePerNight;
 
     @Column(name = "rating")
     private Double rating;
@@ -34,19 +35,23 @@ public class Hotel {
     @Column(name = "country", nullable = false)
     private String country;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "image")
     private String image;
 
     @ManyToOne
-    @JoinColumn(name = "accommodation_type_id", nullable = false)
-    private AccommodationType accommodationType;
+    @JoinColumn(name = "property_type_id", nullable = false)
+    private LodgingType lodgingType;
 
-    public Hotel() {
+    @OneToMany(mappedBy = "lodging", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Room> rooms = new ArrayList<>();
+
+    public Lodging() {
     }
 }

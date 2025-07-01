@@ -9,11 +9,11 @@ import java.util.Optional;
 public interface IBookingService {
     BookingDTO save(BookingDTO bookingDTO);
 
-    Optional<BookingDTO> findById(Long id);
-
     BookingDTO update(BookingDTO bookingDTO) throws ResourceNotFoundException;
 
     void delete(Long id) throws ResourceNotFoundException;
 
     List<BookingDTO> findAll();
+
+    Optional<BookingDTO> findById(Long id);
 }

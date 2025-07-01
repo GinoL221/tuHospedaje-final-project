@@ -5,15 +5,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
-public class HotelDTO {
+public class LodgingDTO {
     private Long id;
     private String name;
     private String description;
-    private Double pricePerNight;
     private Double rating;
     private String address;
     private String city;
@@ -21,8 +20,8 @@ public class HotelDTO {
     private String phoneNumber;
     private String email;
     private String image;
-    private String accommodationType;
+    private Long propertyTypeId;
 
-    public HotelDTO() {
+    public LodgingDTO() {
     }
 }
