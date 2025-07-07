@@ -53,6 +53,9 @@ public class User implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_" + roleEnum.name()));
     }
 
+    @Column(name = "image")
+    private String image;
+
     @Override
     public String getUsername() {
         return email;

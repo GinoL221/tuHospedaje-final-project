@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/tipos-de-alojamientos")
@@ -20,34 +21,47 @@ public class LodgingTypeController {
     }
 
     @PostMapping
-    public ResponseEntity<LodgingTypeDTO> save(@RequestBody LodgingTypeDTO dto) {
-        LodgingTypeDTO saved = lodgingTypeService.save(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<LodgingTypeDTO> save(@RequestBody LodgingTypeDTO lodgingTypeDTO) {
+        if (lodgingTypeDTO.getId() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        LodgingTypeDTO saved = lodgingTypeService.save(lodgingTypeDTO);
+        return ResponseEntity.status(201).body(saved);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<LodgingTypeDTO> update(@PathVariable Long id, @RequestBody LodgingTypeDTO dto) {
-        dto.setId(id);
-        LodgingTypeDTO updated = lodgingTypeService.update(dto);
-        return ResponseEntity.ok(updated);
+    @PutMapping
+    public ResponseEntity<LodgingTypeDTO> update(@RequestBody LodgingTypeDTO lodgingTypeDTO) {
+        ResponseEntity<LodgingTypeDTO> response;
+
+        if (lodgingTypeService.findById(lodgingTypeDTO.getId()).isPresent()) {
+            response = ResponseEntity.ok(lodgingTypeService.update(lodgingTypeDTO));
+        } else {
+            response = ResponseEntity.badRequest().build();
+        }
+        return response;
     }
 
     @GetMapping
-    public List<LodgingTypeDTO> findAll() {
-        return lodgingTypeService.findAll();
+    public ResponseEntity<List<LodgingTypeDTO>> findAll() {
+        return ResponseEntity.ok(lodgingTypeService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<LodgingTypeDTO> findById(@PathVariable Long id) {
-        return lodgingTypeService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<LodgingTypeDTO> lodgingType = lodgingTypeService.findById(id);
+
+        if (lodgingType.isPresent()) {
+            return ResponseEntity.ok(lodgingType.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable Long id) {
         lodgingTypeService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Tipo de alojamiento eliminado con ID: " + id);
     }
 }
 

@@ -1,16 +1,15 @@
 package com.tuhospedaje.backend.controller;
 
 import com.tuhospedaje.backend.dto.UserDTO;
+import com.tuhospedaje.backend.exception.ResourceNotFoundException;
 import com.tuhospedaje.backend.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -31,8 +30,30 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> findById(@PathVariable Long id) {
-        return userService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<UserDTO> user = userService.findById(id);
+        
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<UserDTO> update(@RequestBody UserDTO userDTO) throws ResourceNotFoundException {
+        ResponseEntity<UserDTO> response;
+
+        if (userService.findById(userDTO.getId()).isPresent()) {
+            response = ResponseEntity.ok(userService.update(userDTO));
+        } else {
+            response = ResponseEntity.badRequest().build();
+        }
+        return response;
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) throws ResourceNotFoundException {
+        userService.delete(id);
+        return ResponseEntity.ok("Usuario eliminado con ID: " + id);
     }
 }

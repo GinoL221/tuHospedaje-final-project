@@ -14,6 +14,14 @@ public interface ILodgingRepository extends JpaRepository<Lodging, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByPhoneNumber(String phoneNumber);
-    
+
     List<Lodging> findByNameContainingIgnoreCase(String name);
+
+    List<Lodging> findByCityIgnoreCase(String city);
+
+    List<Lodging> findByCountryIgnoreCase(String country);
+
+    List<Lodging> findByLodgingTypeId(Long lodgingTypeId);
+    
+    List<Lodging> findByNameContainingIgnoreCaseAndCityIgnoreCase(String name, String city);
 }

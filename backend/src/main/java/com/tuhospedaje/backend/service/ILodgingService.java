@@ -11,7 +11,7 @@ public interface ILodgingService {
 
     LodgingDTO update(LodgingDTO lodgingDTO) throws ResourceNotFoundException;
 
-    void delete(Long id) throws ResourceNotFoundException;
+    Optional<LodgingDTO> delete(Long id) throws ResourceNotFoundException;
 
     List<LodgingDTO> findAll();
 

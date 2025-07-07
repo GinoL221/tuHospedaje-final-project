@@ -41,9 +41,10 @@ public class Lodging {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "image")
-    private String image;
-
+    @OneToMany(mappedBy = "lodging", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Image> images = new ArrayList<>();
+    
     @ManyToOne
     @JoinColumn(name = "property_type_id", nullable = false)
     private LodgingType lodgingType;
@@ -53,5 +54,15 @@ public class Lodging {
     private List<Room> rooms = new ArrayList<>();
 
     public Lodging() {
+    }
+
+    public void addImage(Image image) {
+        images.add(image);
+        image.setLodging(this);
+    }
+
+    public void removeImage(Image image) {
+        images.remove(image);
+        image.setLodging(null);
     }
 }

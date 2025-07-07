@@ -3,17 +3,17 @@ package com.tuhospedaje.backend.service.impl;
 import com.tuhospedaje.backend.dto.BookingDTO;
 import com.tuhospedaje.backend.entity.Booking;
 import com.tuhospedaje.backend.enums.BookingStatusEnum;
+import com.tuhospedaje.backend.exception.BadRequestException;
 import com.tuhospedaje.backend.exception.ResourceNotFoundException;
 import com.tuhospedaje.backend.repository.IBookingRepository;
 import com.tuhospedaje.backend.repository.IRoomRepository;
 import com.tuhospedaje.backend.repository.IUserRepository;
 import com.tuhospedaje.backend.service.IBookingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,9 +21,7 @@ import java.util.stream.Collectors;
 @Service
 public class BookingServiceImpl implements IBookingService {
     private final IBookingRepository bookingRepository;
-
     private final IUserRepository userRepository;
-
     private final IRoomRepository roomRepository;
 
     @Autowired
@@ -37,43 +35,35 @@ public class BookingServiceImpl implements IBookingService {
     @Override
     public BookingDTO save(BookingDTO dto) {
         var user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUserId()));
 
         var room = roomRepository.findById(dto.getRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada con ID: " + dto.getRoomId()));
+
+        boolean overlaps = bookingRepository.existsByRoomAndDates(room, dto.getCheckInDate(), dto.getCheckOutDate());
+        if (overlaps) {
+            throw new BadRequestException("La habitación ya está reservada en las fechas indicadas.");
+        }
 
         Booking bookingEntity = new Booking();
         bookingEntity.setUser(user);
         bookingEntity.setRoom(room);
-
-        // Convertir fechas de String a LocalDate
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate checkInDate = LocalDate.parse(dto.getCheckInDate().toString(), formatter);
-        LocalDate checkOutDate = LocalDate.parse(dto.getCheckOutDate().toString(), formatter);
-        bookingEntity.setCheckInDate(checkInDate);
-        bookingEntity.setCheckOutDate(checkOutDate);
-
+        bookingEntity.setCheckInDate(dto.getCheckInDate());
+        bookingEntity.setCheckOutDate(dto.getCheckOutDate());
         bookingEntity.setNumberOfGuests(dto.getNumberOfGuests());
         bookingEntity.setTotalPrice(dto.getTotalPrice());
-        bookingEntity.setStatus(BookingStatusEnum.valueOf(dto.getStatus()));
+
+        try {
+            bookingEntity.setStatus(BookingStatusEnum.valueOf(dto.getStatus()));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Estado de reserva inválido: " + dto.getStatus());
+        }
 
         bookingEntity.setCreationDate(LocalDateTime.now());
 
         var saved = bookingRepository.save(bookingEntity);
-
-        return BookingDTO.builder()
-                .id(saved.getId())
-                .userId(user.getId())
-                .roomId(saved.getRoom().getId())
-                .checkInDate(saved.getCheckInDate())
-                .checkOutDate(saved.getCheckOutDate())
-                .numberOfGuests(saved.getNumberOfGuests())
-                .totalPrice(saved.getTotalPrice())
-                .status(String.valueOf(saved.getStatus()))
-                .creationDate(saved.getCreationDate())
-                .build();
+        return mapToDTO(saved);
     }
-
 
     @Override
     public Optional<BookingDTO> findById(Long id) {
@@ -81,20 +71,40 @@ public class BookingServiceImpl implements IBookingService {
     }
 
     @Override
-    public BookingDTO update(BookingDTO bookingDTO) throws ResourceNotFoundException {
-        if (!bookingRepository.existsById(bookingDTO.getId())) {
-            throw new ResourceNotFoundException("Reserva no encontrada con ID: " + bookingDTO.getId());
+    public BookingDTO update(BookingDTO bookingDTO) {
+        Booking existing = bookingRepository.findById(bookingDTO.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada con ID: " + bookingDTO.getId()));
+
+        existing.setCheckInDate(bookingDTO.getCheckInDate());
+        existing.setCheckOutDate(bookingDTO.getCheckOutDate());
+        existing.setNumberOfGuests(bookingDTO.getNumberOfGuests());
+        existing.setTotalPrice(bookingDTO.getTotalPrice());
+
+        try {
+            existing.setStatus(BookingStatusEnum.valueOf(bookingDTO.getStatus()));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Estado de reserva inválido: " + bookingDTO.getStatus());
         }
-        Booking updated = bookingRepository.save(mapToEntity(bookingDTO));
+
+        var user = userRepository.findById(bookingDTO.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + bookingDTO.getUserId()));
+        existing.setUser(user);
+
+        var room = roomRepository.findById(bookingDTO.getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada con ID: " + bookingDTO.getRoomId()));
+        existing.setRoom(room);
+
+        Booking updated = bookingRepository.save(existing);
         return mapToDTO(updated);
     }
 
     @Override
-    public void delete(Long id) throws ResourceNotFoundException {
-        if (!bookingRepository.existsById(id)) {
+    public void delete(Long id) {
+        try {
+            bookingRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
             throw new ResourceNotFoundException("Reserva no encontrada con ID: " + id);
         }
-        bookingRepository.deleteById(id);
     }
 
     @Override
@@ -117,31 +127,5 @@ public class BookingServiceImpl implements IBookingService {
                 .status(String.valueOf(booking.getStatus()))
                 .creationDate(booking.getCreationDate())
                 .build();
-    }
-
-    private Booking mapToEntity(BookingDTO dto) {
-        Booking booking = new Booking();
-
-        if (dto.getId() != null) {
-            booking.setId(dto.getId());
-        }
-
-        var user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUserId()));
-        booking.setUser(user);
-
-        var room = roomRepository.findById(dto.getRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada con ID: " + dto.getRoomId()));
-        booking.setRoom(room);
-
-        booking.setCheckInDate(dto.getCheckInDate());
-        booking.setCheckOutDate(dto.getCheckOutDate());
-        booking.setNumberOfGuests(dto.getNumberOfGuests());
-        booking.setTotalPrice(dto.getTotalPrice());
-        booking.setStatus(BookingStatusEnum.valueOf(dto.getStatus()));
-
-        booking.setCreationDate(LocalDateTime.now());
-
-        return booking;
     }
 }

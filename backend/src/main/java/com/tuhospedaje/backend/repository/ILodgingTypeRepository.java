@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface ILodgingTypeRepository extends JpaRepository<LodgingType, Long> {
     Optional<LodgingType> findByName(String name);
+
+    boolean existsByNameIgnoreCase(String trim);
 }

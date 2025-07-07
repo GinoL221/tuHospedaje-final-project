@@ -1,8 +1,11 @@
 import { useState } from "react";
 import logo from "../assets/images/TuHospedaje_Isologotipo.png";
+import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { token, user, logout } = useAuth();
 
   return (
     <header>
@@ -25,9 +28,6 @@ export default function Header() {
         <div className={`nav-wrapper ${isMenuOpen ? "open" : ""}`}>
           <ul className="nav-links main-links">
             <li>
-              <a href="#inicio">Inicio</a>
-            </li>
-            <li>
               <a href="#habitaciones">Habitaciones</a>
             </li>
             <li>
@@ -41,14 +41,42 @@ export default function Header() {
             </li>
           </ul>
           <ul className="nav-links user-links">
-            <li>
-              <a href="#iniciar-sesion">Iniciar sesión</a>
-            </li>
-            <li>
-              <a href="#registrarse" className="btn-secondary">
-                Crea tu cuenta
-              </a>
-            </li>
+            {token ? (
+              <>
+                <li className="user-info">
+                  <Link to="/profile">
+                    <img
+                      src={user.image}
+                      alt="Avatar"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        marginRight: "8px",
+                      }}
+                    />
+                    {user.name ? `¡Bienvenido ${user.name}!` : "Perfil"}
+                  </Link>
+                </li>
+                <li>
+                  <button onClick={logout} className="btn-secondary">
+                    Cerrar sesión
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link to="/login">Iniciar sesión</Link>
+                </li>
+                <li>
+                  <Link to="/register" className="btn-secondary">
+                    Registrate
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </div>
       </nav>

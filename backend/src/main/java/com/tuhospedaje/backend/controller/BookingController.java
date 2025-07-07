@@ -8,9 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/turnos")
+@RequestMapping("/reservas")
 public class BookingController {
     private final IBookingService bookingService;
 
@@ -21,17 +22,25 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<BookingDTO> save(@RequestBody BookingDTO bookingDTO) {
-        BookingDTO savedBooking = bookingService.save(bookingDTO);
-        return ResponseEntity.ok(savedBooking);
+        if (bookingDTO.getId() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        BookingDTO saved = bookingService.save(bookingDTO);
+        return ResponseEntity.status(201).body(saved);
     }
+
 
     @PutMapping
     public ResponseEntity<BookingDTO> update(@RequestBody BookingDTO bookingDTO) {
+        ResponseEntity<BookingDTO> response;
+
         if (bookingService.findById(bookingDTO.getId()).isPresent()) {
-            return ResponseEntity.ok(bookingService.update(bookingDTO));
+            response = ResponseEntity.ok(bookingService.update(bookingDTO));
         } else {
-            return ResponseEntity.badRequest().build();
+            response = ResponseEntity.badRequest().build();
         }
+        return response;
     }
 
     @GetMapping
@@ -41,9 +50,13 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BookingDTO> findById(@PathVariable Long id) throws ResourceNotFoundException {
-        return bookingService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<BookingDTO> booking = bookingService.findById(id);
+
+        if (booking.isPresent()) {
+            return ResponseEntity.ok(booking.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")

@@ -1,7 +1,7 @@
 import logo from "../assets/images/TuHospedaje_Logotipo.png";
-import twitterLogo from "../assets/images/logo-twitterx.png";
-import facebookLogo from "../assets/images/logo-facebook.png";
-import instagramLogo from "../assets/images/logo-instagram.png";
+import twitterLogo from "../assets/images/logo_twitterx.png";
+import facebookLogo from "../assets/images/logo_facebook.png";
+import instagramLogo from "../assets/images/logo_instagram.png";
 
 export default function Footer() {
   return (

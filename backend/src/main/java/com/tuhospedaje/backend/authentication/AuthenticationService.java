@@ -5,10 +5,16 @@ import com.tuhospedaje.backend.entity.User;
 import com.tuhospedaje.backend.enums.RoleEnum;
 import com.tuhospedaje.backend.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,22 +26,42 @@ public class AuthenticationService {
 
     // Registra un nuevo usuario en el sistema
     public AuthenticationResponse register(RegisterRequest request) {
-        // Crea un nuevo usuario con los datos proporcionados en la solicitud
+        RoleEnum roleToAssign = RoleEnum.USER;
+
+        if (request.getRole() != null && request.getRole().equalsIgnoreCase("ADMIN")) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null ||
+                    authentication.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                throw new AccessDeniedException("No estás autorizado para crear un usuario administrador.");
+            }
+
+            roleToAssign = RoleEnum.ADMIN;
+        }
+
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword())) // Codifica la contraseña
-                .roleEnum(RoleEnum.USER) // Asigna el rol de usuario
+                .password(passwordEncoder.encode(request.getPassword()))
+                .roleEnum(roleToAssign)
                 .build();
 
-        // Guarda el usuario en la base de datos
+        // Asignar imagen por defecto si no viene
+        if (user.getImage() == null || user.getImage().isBlank()) {
+            user.setImage("https://ui-avatars.com/api/?name="
+                    + user.getFirstName() + "+" + user.getLastName());
+        }
+
         userRepository.save(user);
 
-        // Genera un token JWT para el usuario registrado
-        var jwt = jwtService.generateToken(user);
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("firstName", user.getFirstName());
+        extraClaims.put("role", user.getRoleEnum().name());
+        extraClaims.put("image", user.getImage());
 
-        // Devuelve la respuesta con el token generado
+        String jwt = jwtService.generateToken(extraClaims, user);
+
         return AuthenticationResponse.builder()
                 .token(jwt)
                 .build();
@@ -52,28 +78,16 @@ public class AuthenticationService {
 
         var user = (User) auth.getPrincipal();
 
-        var jwt = jwtService.generateToken(user);
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("firstName", user.getFirstName());
+        extraClaims.put("role", user.getRoleEnum().name());
+        extraClaims.put("image", user.getImage());
+
+        var jwt = jwtService.generateToken(extraClaims, user);
 
         return AuthenticationResponse.builder()
                 .token(jwt)
                 .build();
     }
 
-    public AuthenticationResponse registerAdmin(RegisterRequest request) {
-        var admin = User.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .roleEnum(RoleEnum.ADMIN)
-                .build();
-
-        userRepository.save(admin);
-
-        var jwt = jwtService.generateToken(admin);
-
-        return AuthenticationResponse.builder()
-                .token(jwt)
-                .build();
-    }
 }

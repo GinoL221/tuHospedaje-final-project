@@ -22,7 +22,7 @@ public class RoomServiceImpl implements IRoomService {
     @Override
     public RoomDTO save(RoomDTO dto) {
         var lodging = lodgingRepository.findById(dto.getLodgingId())
-                .orElseThrow(() -> new ResourceNotFoundException("Establecimiento no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Establecimiento no encontrado con ID: " + dto.getLodgingId()));
 
         Room room = new Room();
         room.setLodging(lodging);
@@ -36,7 +36,7 @@ public class RoomServiceImpl implements IRoomService {
     }
 
     @Override
-    public List<RoomDTO> getAll() {
+    public List<RoomDTO> findAll() {
         return roomRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
@@ -44,34 +44,39 @@ public class RoomServiceImpl implements IRoomService {
     }
 
     @Override
-    public Optional<RoomDTO> getById(Long id) {
+    public Optional<RoomDTO> findById(Long id) {
         return roomRepository.findById(id)
                 .map(this::mapToDTO);
     }
 
     @Override
-    public void delete(Long id) {
-        if (!roomRepository.existsById(id)) {
+    public Optional<RoomDTO> delete(Long id) {
+        Optional<Room> roomToDelete = roomRepository.findById(id);
+        if (roomToDelete.isPresent()) {
+            RoomDTO dto = mapToDTO(roomToDelete.get());
+            roomRepository.deleteById(id);
+            return Optional.of(dto);
+        } else {
             throw new ResourceNotFoundException("Habitación no encontrada con ID: " + id);
         }
-        roomRepository.deleteById(id);
     }
 
     @Override
-    public void update(RoomDTO dto) {
-        Room room = roomRepository.findById(dto.getId())
+    public RoomDTO update(RoomDTO dto) {
+        Room existing = roomRepository.findById(dto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Habitación no encontrada con ID: " + dto.getId()));
 
         var lodging = lodgingRepository.findById(dto.getLodgingId())
-                .orElseThrow(() -> new ResourceNotFoundException("Establecimiento no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Establecimiento no encontrado con ID: " + dto.getLodgingId()));
 
-        room.setLodging(lodging);
-        room.setRoomType(dto.getRoomType());
-        room.setRoomNumber(dto.getRoomNumber());
-        room.setAvailable(dto.getAvailable());
-        room.setPrice(dto.getPrice());
+        existing.setLodging(lodging);
+        existing.setRoomType(dto.getRoomType());
+        existing.setRoomNumber(dto.getRoomNumber());
+        existing.setAvailable(dto.getAvailable());
+        existing.setPrice(dto.getPrice());
 
-        roomRepository.save(room);
+        Room updated = roomRepository.save(existing);
+        return mapToDTO(updated);
     }
 
     private RoomDTO mapToDTO(Room room) {

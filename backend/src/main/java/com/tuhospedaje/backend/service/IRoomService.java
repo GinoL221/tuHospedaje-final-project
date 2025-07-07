@@ -8,11 +8,11 @@ import java.util.Optional;
 public interface IRoomService {
     RoomDTO save(RoomDTO roomDTO);
 
-    List<RoomDTO> getAll();
+    List<RoomDTO> findAll();
 
-    Optional<RoomDTO> getById(Long id);
+    Optional<RoomDTO> findById(Long id);
 
-    void delete(Long id);
+    Optional<RoomDTO> delete(Long id);
 
-    void update(RoomDTO dto);
+    RoomDTO update(RoomDTO dto);
 }

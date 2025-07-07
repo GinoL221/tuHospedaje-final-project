@@ -16,31 +16,49 @@ import java.util.Optional;
 @Service
 public class LodgingServiceImpl implements ILodgingService {
     private final ILodgingTypeRepository propertyTypeRepository;
-    private final ILodgingRepository hotelRepository;
+    private final ILodgingRepository lodgingRepository;
 
     @Autowired
-    public LodgingServiceImpl(ILodgingTypeRepository propertyTypeRepository, ILodgingRepository hotelRepository) {
+    public LodgingServiceImpl(ILodgingTypeRepository propertyTypeRepository, ILodgingRepository lodgingRepository) {
         this.propertyTypeRepository = propertyTypeRepository;
-        this.hotelRepository = hotelRepository;
+        this.lodgingRepository = lodgingRepository;
     }
 
     @Override
     public LodgingDTO save(LodgingDTO dto) {
-        LodgingType type = propertyTypeRepository.findById(dto.getPropertyTypeId())
-                .orElseThrow(() -> new RuntimeException("Tipo de alojamiento no encontrado con ID: " + dto.getPropertyTypeId()));
+        if (dto == null) {
+            throw new IllegalArgumentException("El objeto LodgingDTO no puede ser nulo.");
+        }
 
-        Lodging lodging = getHotel(dto, type);
-        Lodging saved = hotelRepository.save(lodging);
-        return mapToDTO(saved);
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("El email del alojamiento es obligatorio.");
+        }
+
+        if (lodgingRepository.existsByEmail(dto.getEmail())) {
+            throw new IllegalArgumentException("Ya existe un alojamiento con el email: " + dto.getEmail());
+        }
+
+        LodgingType type = propertyTypeRepository.findById(dto.getPropertyTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de alojamiento no encontrado con ID: " + dto.getPropertyTypeId()));
+
+        Lodging lodging = dto.toEntity();
+        lodging.setLodgingType(type);
+
+        Lodging saved = lodgingRepository.save(lodging);
+        return LodgingDTO.fromEntity(saved);
     }
 
     @Override
     public LodgingDTO update(LodgingDTO dto) {
-        Lodging lodging = hotelRepository.findById(dto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Hotel no encontrado con ID: " + dto.getId()));
+        if (dto == null || dto.getId() == null) {
+            throw new IllegalArgumentException("Debe proporcionar un ID válido para actualizar el alojamiento.");
+        }
+
+        Lodging lodging = lodgingRepository.findById(dto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Alojamiento no encontrado con ID: " + dto.getId()));
 
         LodgingType type = propertyTypeRepository.findById(dto.getPropertyTypeId())
-                .orElseThrow(() -> new RuntimeException("Tipo de alojamiento no encontrado con ID: " + dto.getPropertyTypeId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Tipo de alojamiento no encontrado con ID: " + dto.getPropertyTypeId()));
 
         lodging.setName(dto.getName());
         lodging.setDescription(dto.getDescription());
@@ -50,69 +68,51 @@ public class LodgingServiceImpl implements ILodgingService {
         lodging.setCountry(dto.getCountry());
         lodging.setPhoneNumber(dto.getPhoneNumber());
         lodging.setEmail(dto.getEmail());
-        lodging.setImage(dto.getImage());
         lodging.setLodgingType(type);
 
-        Lodging updated = hotelRepository.save(lodging);
-        return mapToDTO(updated);
+        Lodging updated = lodgingRepository.save(lodging);
+        return LodgingDTO.fromEntity(updated);
     }
 
     @Override
-    public void delete(Long id) {
-        if (!hotelRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Hotel no encontrado con ID: " + id);
+    public Optional<LodgingDTO> delete(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Debe proporcionar un ID válido para eliminar el alojamiento.");
         }
-        hotelRepository.deleteById(id);
+
+        Lodging lodging = lodgingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Alojamiento no encontrado con ID: " + id));
+
+        lodgingRepository.deleteById(id);
+        return Optional.of(LodgingDTO.fromEntity(lodging));
     }
 
     @Override
     public List<LodgingDTO> findAll() {
-        return hotelRepository.findAll().stream()
-                .map(this::mapToDTO)
+        return lodgingRepository.findAll()
+                .stream()
+                .map(LodgingDTO::fromEntity)
                 .toList();
     }
 
     @Override
     public Optional<LodgingDTO> findById(Long id) {
-        return hotelRepository.findById(id).map(this::mapToDTO);
+        if (id == null) {
+            throw new IllegalArgumentException("Debe proporcionar un ID para buscar el alojamiento.");
+        }
+
+        return lodgingRepository.findById(id).map(LodgingDTO::fromEntity);
     }
 
     @Override
     public List<LodgingDTO> findByName(String name) {
-        return hotelRepository.findByNameContainingIgnoreCase(name)
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar un nombre para buscar alojamientos.");
+        }
+
+        return lodgingRepository.findByNameContainingIgnoreCase(name)
                 .stream()
-                .map(this::mapToDTO)
+                .map(LodgingDTO::fromEntity)
                 .toList();
-    }
-
-    private LodgingDTO mapToDTO(Lodging lodging) {
-        return LodgingDTO.builder()
-                .id(lodging.getId())
-                .name(lodging.getName())
-                .description(lodging.getDescription())
-                .rating(lodging.getRating())
-                .address(lodging.getAddress())
-                .city(lodging.getCity())
-                .country(lodging.getCountry())
-                .phoneNumber(lodging.getPhoneNumber())
-                .email(lodging.getEmail())
-                .image(lodging.getImage())
-                .propertyTypeId(lodging.getLodgingType().getId())
-                .build();
-    }
-
-    private Lodging getHotel(LodgingDTO dto, LodgingType type) {
-        Lodging lodging = new Lodging();
-        lodging.setName(dto.getName());
-        lodging.setDescription(dto.getDescription());
-        lodging.setRating(dto.getRating());
-        lodging.setAddress(dto.getAddress());
-        lodging.setCity(dto.getCity());
-        lodging.setCountry(dto.getCountry());
-        lodging.setPhoneNumber(dto.getPhoneNumber());
-        lodging.setEmail(dto.getEmail());
-        lodging.setImage(dto.getImage());
-        lodging.setLodgingType(type);
-        return lodging;
     }
 }

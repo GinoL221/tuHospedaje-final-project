@@ -11,4 +11,8 @@ public interface IUserService {
     Optional<UserDTO> findById(Long id);
 
     Optional<UserDTO> findByEmail(String email);
+
+    Optional<UserDTO> delete(Long id);
+
+    UserDTO update(UserDTO userDTO);
 }

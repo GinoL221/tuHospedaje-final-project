@@ -24,10 +24,4 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authenticationService.register(request));
     }
-
-    // Maneja la solicitud de registro de un nuevo administrador
-    @PostMapping("/register-admin")
-    public ResponseEntity<AuthenticationResponse> registerAdmin(@RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authenticationService.registerAdmin(request));
-    }
 }

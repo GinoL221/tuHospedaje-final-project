@@ -6,6 +6,15 @@
   --color-acento: #2a9d8f; /* Verde azulado */
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Fondo general y texto */
 body {
   margin: 0;
@@ -231,6 +240,10 @@ footer .page-container {
 
 .footer-right img:hover {
   transform: scale(1.1);
+}
+
+footer {
+  margin-top: auto;
 }
 
 /* Móviles pequeños */
