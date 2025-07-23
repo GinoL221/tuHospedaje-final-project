@@ -1,8 +1,14 @@
 import { useState } from "react";
+
 import "../assets/css/home.css";
 import "../assets/css/hotelCard.css";
 import "../assets/css/searchCard.css";
 import "../assets/css/accomodationCard.css";
+
+import arrowRightOrange from "../assets/images/arrow_right.png";
+import arrowLeftOrange from "../assets/images/arrow_left.png";
+import arrowRightGreen from "../assets/images/arrow-right.png";
+import arrowLeftOGreen from "../assets/images/arrow-left.png";
 
 import HotelCard from "../components/HotelCard";
 import hotel1 from "../assets/images/hotel1.jpg";
@@ -16,9 +22,6 @@ import hotelImage from "../assets/images/tipo-hotel.jpg";
 import hostelImage from "../assets/images/tipo-hostel.jpg";
 import cabinImage from "../assets/images/tipo-cabana.jpg";
 import apartmentImage from "../assets/images/tipo-departamento.jpg";
-
-import arrowRight from "../assets/images/arrow_right.png";
-import arrowLeft from "../assets/images/arrow_left.png";
 
 export default function Home() {
   const hotels = [
@@ -86,6 +89,16 @@ export default function Home() {
     visibleHotels.push(hotels[index]);
   }
 
+  function scrollLeft(id) {
+    const container = document.getElementById(id);
+    container.scrollBy({ left: -300, behavior: "smooth" });
+  }
+
+  function scrollRight(id) {
+    const container = document.getElementById(id);
+    container.scrollBy({ left: 300, behavior: "smooth" });
+  }
+
   return (
     <main className="home page-container">
       <section className="search">
@@ -111,31 +124,47 @@ export default function Home() {
 
       <section className="accommodation-types">
         <h2>Tipos de alojamientos</h2>
-        <div className="accommodation-card-list">
-          <div
-            className="accommodation-card"
-            style={{ backgroundImage: `url(${hotelImage})` }}
+        <div className="carousel-container">
+          <button
+            className="scroll-btn"
+            onClick={() => scrollLeft("accommodation-carousel")}
           >
-            <span>Hotel</span>
+            <img src={arrowLeftOGreen} alt="Scroll Izquierda" />
+          </button>
+
+          <div className="accommodation-carousel" id="accommodation-carousel">
+            <div
+              className="accommodation-card"
+              style={{ backgroundImage: `url(${hotelImage})` }}
+            >
+              <span>Hotel</span>
+            </div>
+            <div
+              className="accommodation-card"
+              style={{ backgroundImage: `url(${hostelImage})` }}
+            >
+              <span>Hostel</span>
+            </div>
+            <div
+              className="accommodation-card"
+              style={{ backgroundImage: `url(${cabinImage})` }}
+            >
+              <span>Cabaña</span>
+            </div>
+            <div
+              className="accommodation-card"
+              style={{ backgroundImage: `url(${apartmentImage})` }}
+            >
+              <span>Departamento</span>
+            </div>
           </div>
-          <div
-            className="accommodation-card"
-            style={{ backgroundImage: `url(${hostelImage})` }}
+
+          <button
+            className="scroll-btn"
+            onClick={() => scrollRight("accommodation-carousel")}
           >
-            <span>Hostel</span>
-          </div>
-          <div
-            className="accommodation-card"
-            style={{ backgroundImage: `url(${cabinImage})` }}
-          >
-            <span>Cabaña</span>
-          </div>
-          <div
-            className="accommodation-card"
-            style={{ backgroundImage: `url(${apartmentImage})` }}
-          >
-            <span>Departamento</span>
-          </div>
+            <img src={arrowRightGreen} alt="Scroll Derecha" />
+          </button>
         </div>
       </section>
 
@@ -147,7 +176,7 @@ export default function Home() {
             onClick={prev}
             aria-label="Anterior"
           >
-            <img src={arrowLeft} alt="Flecha izquierda" />
+            <img src={arrowLeftOrange} alt="Flecha izquierda" />
           </button>
           <div className="hotel-list">
             {visibleHotels.map((hotel, index) => (
@@ -166,7 +195,7 @@ export default function Home() {
             onClick={next}
             aria-label="Siguiente"
           >
-            <img src={arrowRight} alt="Flecha derecha" />
+            <img src={arrowRightOrange} alt="Flecha derecha" />
           </button>
         </div>
       </section>

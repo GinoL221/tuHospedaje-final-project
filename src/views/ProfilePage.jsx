@@ -18,11 +18,14 @@ export default function ProfilePage() {
           <strong>Nombre:</strong> {user.name}
         </p>
         <p>
+          <strong>Apellido:</strong> {user.lastName}
+        </p>
+        <p>
           <strong>Email:</strong> {user.email}
         </p>
         {user?.role === "ADMIN" && (
           <p>
-            <strong>Rol:</strong> {user.role}
+            <strong>Rol: </strong>Administrador
           </p>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/images/TuHospedaje_Isologotipo.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -6,6 +6,17 @@ import { useAuth } from "../hooks/useAuth";
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { token, user, logout } = useAuth();
+
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(".user-dropdown")) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   return (
     <header>
@@ -40,31 +51,39 @@ export default function Header() {
               <button className="btn-primary">Reservar</button>
             </li>
           </ul>
+
           <ul className="nav-links user-links">
             {token ? (
-              <>
-                <li className="user-info">
-                  <Link to="/profile">
-                    <img
-                      src={user.image}
-                      alt="Avatar"
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        marginRight: "8px",
-                      }}
-                    />
-                    {user.name ? `¡Bienvenido ${user.name}!` : "Perfil"}
-                  </Link>
-                </li>
-                <li>
-                  <button onClick={logout} className="btn-secondary">
-                    Cerrar sesión
-                  </button>
-                </li>
-              </>
+              <li className="user-info user-dropdown">
+                <button
+                  className="user-button"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  {user.name ? `¡Bienvenido ${user.name}!` : "Perfil"}
+                  <img src={user.image} alt="Avatar" className="user-avatar" />
+                </button>
+
+                {isMenuOpen && (
+                  <div className="dropdown-menu">
+                    <li>
+                      <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
+                        Perfil
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsMenuOpen(false);
+                        }}
+                        className="btn-secondary"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </li>
+                  </div>
+                )}
+              </li>
             ) : (
               <>
                 <li>

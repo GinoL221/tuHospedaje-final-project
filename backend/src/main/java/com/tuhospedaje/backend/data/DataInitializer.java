@@ -59,7 +59,7 @@ public class DataInitializer implements CommandLineRunner {
                     new LodgingType("Hotel"),
                     new LodgingType("Cabaña"),
                     new LodgingType("Departamento"),
-                    new LodgingType("Hostal")
+                    new LodgingType("Hostel")
             );
             lodgingTypeRepository.saveAll(types);
         }

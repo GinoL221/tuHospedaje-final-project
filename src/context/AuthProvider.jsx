@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import apiClient from "../api/apiClient";
 
@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
       const decoded = jwtDecode(savedToken);
       setUser({
         name: decoded.firstName,
+        lastName: decoded.lastName,
         role: decoded.role,
         email: decoded.sub,
         image: decoded.image,
@@ -32,6 +33,7 @@ export function AuthProvider({ children }) {
     setToken(data.token);
     setUser({
       name: decoded.firstName,
+      lasName: decoded.lasName,
       role: decoded.role,
       email: decoded.sub,
       image: decoded.image,
